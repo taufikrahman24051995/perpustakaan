@@ -1,5 +1,4 @@
-<?php 
-
+<?php
 session_start();
 
 if( !isset($_SESSION["login"]) ) {
@@ -9,7 +8,31 @@ if( !isset($_SESSION["login"]) ) {
 
 require 'functions.php';
 
-$admin = query("SELECT * FROM admin");
+// ambil data di URL
+$kode_buku = $_GET["kode_buku"];
+// query data mahasiswa berdasarkan id
+$buku = query("SELECT * FROM buku WHERE kode_buku = '$kode_buku'")[0];
+
+// cek apakah tombol submit sudah ditekan atau belum
+if( isset($_POST["ubah_buku"]) ) {
+
+    // cek apakah data berhasil diubah atau tidak
+    if( ubahBuku($_POST) > 0) {
+        echo "
+            <script>
+                alert('Data buku berhasil diubah');
+                document.location.href = 'buku.php';
+            </script>
+            ";
+    } else {
+        echo "
+            <script>
+                alert('Data buku gagal diubah');
+                document.location.href = 'buku.php';
+            </script>
+            ";
+    }
+}
 
 $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admin]' ");
 
@@ -32,22 +55,20 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- MetisMenu CSS -->
         <link href="../css/metisMenu.min.css" rel="stylesheet">
 
-        <!-- DataTables CSS -->
-        <link href="../css/dataTables/dataTables.bootstrap.css" rel="stylesheet">
-
-        <!-- DataTables Responsive CSS -->
-        <link href="../css/dataTables/dataTables.responsive.css" rel="stylesheet">
+        <!-- Timeline CSS -->
+        <link href="../css/timeline.css" rel="stylesheet">
 
         <!-- Custom CSS -->
         <link href="../css/startmin.css" rel="stylesheet">
 
+        <!-- Morris Charts CSS -->
+        <link href="../css/morris.css" rel="stylesheet">
+
         <!-- Custom Fonts -->
         <link href="../css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
-        <link rel="stylesheet" type="text/css" href="../css/style.css">
-
         <link rel="shorcut icon" href="../img/perpustakaan.png">
-        
+
         <style type="text/css">
              .navbar-inverse {
                     background-color: #5cb85c;
@@ -111,7 +132,7 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                 </ul>
                 <!-- /.navbar-top-links -->
 
-                <div class="navbar-default sidebar" role="navigation">
+               <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-collapse">
                         <ul class="nav" id="side-menu">
                             <li>
@@ -127,7 +148,7 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                                 <a href="kategori.php"><i class="fa fa-list-alt fa-fw"></i> Data Kategori</a>
                             </li>
                             <li>
-                                <a href="buku.php"><i class="fa fa-book fa-fw"></i> Data Buku</a>
+                                <a href="buku.php" class="active"><i class="fa fa-book fa-fw"></i> Data Buku</a>
                             </li>
                            <li>
                                 <a href="#"><i class="fa fa-list fa-fw"></i> Pinjam Buku<span class="fa arrow"></span></a>
@@ -182,56 +203,57 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                     </div>
                 </div>
             </nav>
-            
+
             <div id="page-wrapper">
                 <div class="container-fluid">
+                	<form action="" method="post">
                     <div class="row">
                         <div class="col-lg-12">
-                            <h1 class="page-header"><i class="fa fa-user fa-fw"></i> Data Admin</h1>
+                            <h1 class="page-header"><i class="fa fa-book fa-fw"></i> Ubah Data Buku</h1>
                         </div>
                         <!-- /.col-lg-12 -->
                     </div>
                     <!-- /.row -->
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <a href="admin_input.php"><button type="button" class="btn btn-success"><i class="fa fa-plus"></i> Input Admin</button></a>
-                                    <a href="admin_laporan.php" target="_blank"><button type="button" class="btn btn-info"><i class="fa fa-print"></i> Print Admin</button></a>
-                                </div>
-                                <div class="panel-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered table-hover" id="dataTables-example">
-                                            <thead>
-                                                <tr>
-                                                    <th><div align="center">No</div></th>
-                                                    <th><div align="center">Kode Admin</div></th>
-                                                    <th><div align="center">Nama Admin</div></th>
-                                                    <th><div align="center">Username</div></th>
-                                                    <th><div align="center">Password</div></th>
-                                                </tr>
-                                            </thead>
+                    <div class="form-group">
+                        <label for="kode_buku">Kode Buku</label>
+                        <input class="form-control" placeholder="Kode Buku" name="kode_buku" id="kode_buku" value="<?php echo $buku["kode_buku"]; ?>" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="judul_buku">Judul Buku</label>
+                        <input class="form-control" placeholder="Judul Buku" name="judul_buku" id="judul_buku" autocomplete="off" value="<?php echo $buku["judul_buku"]; ?>" autofocus required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pengarang">Pengarang</label>
+                        <input class="form-control" placeholder="Pengarang" name="pengarang" id="pengarang" autocomplete="off" value="<?php echo $buku["pengarang"]; ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="penerbit">Penerbit</label>
+                        <input class="form-control" placeholder="Penerbit" name="penerbit" id="penerbit" autocomplete="off" value="<?php echo $buku["penerbit"]; ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stok">Stok</label>
+                        <input class="form-control" placeholder="Stok" name="stok" id="stok" type="number" autocomplete="off" value="<?php echo $buku["stok"]; ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Kategori</label>
+                        <select name="nama_kategori" id="nama_kategori" class="form-control" required>
+                            <option value="" >Pilih Nama Kategori</option>
+                            <?php 
+                                $kategori = mysqli_query($koneksi, "SELECT * FROM kategori");
+                                $jsArray = "var prdName = new Array();\n";
+                                while($nama_kategori = mysqli_fetch_array($kategori) ) {
+                               echo "<option value='{$nama_kategori['kode_kategori']}'".($buku['kode_kategori'] == $nama_kategori['kode_kategori']?" selected":"").">{$nama_kategori['nama_kategori']}</option>";
+                                }
+                             ?>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success" name="ubah_buku">Ubah Buku</button>
+                    </form>
+				</div>
+        </div>
+        <!-- /#wrapper -->
 
-                                            <?php $i = 1; ?>
-                                            <?php foreach ($admin as $row) : ?>
-
-                                            <tr>
-                                                <td align="center"><?php echo $i; ?></td>
-                                                <td align="center"><?php echo $row["kode_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["nama_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["username"]; ?></td>
-                                                <td align="center">Password tidak ditampilkan</td>
-                                            </tr>
-
-                                            <?php $i++; ?>
-                                            <?php endforeach; ?>
-
-                                        </table>
-                                    </div>
-                                </div>
-                  </div>                <!-- /.table-responsive -->
-            </div>
-             <!-- jQuery -->
+        <!-- jQuery -->
         <script src="../js/jquery.min.js"></script>
 
         <!-- Bootstrap Core JavaScript -->
@@ -240,23 +262,8 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- Metis Menu Plugin JavaScript -->
         <script src="../js/metisMenu.min.js"></script>
 
-        <!-- DataTables JavaScript -->
-        <script src="../js/dataTables/jquery.dataTables.min.js"></script>
-        <script src="../js/dataTables/dataTables.bootstrap.min.js"></script>
-
         <!-- Custom Theme JavaScript -->
         <script src="../js/startmin.js"></script>
 
-        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
-        <script>
-            $(document).ready(function() {
-                $('#dataTables-example').DataTable({
-                        responsive: true
-                });
-            });
-        </script>
-
-
     </body>
-	
 </html>

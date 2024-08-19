@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 session_start();
 
@@ -9,7 +9,37 @@ if( !isset($_SESSION["login"]) ) {
 
 require 'functions.php';
 
-$admin = query("SELECT * FROM admin");
+// cek apakah tombol submit sudah ditekan atau belum
+if( isset($_POST["input_admin"]) ) {
+
+    // cek apakah data berhasil ditambahkan atau tidak
+    if( tambahAdmin($_POST) > 0) {
+        echo "
+            <script>
+                alert('Data admin berhasil ditambahkan');
+                document.location.href = 'admin.php';
+            </script>
+            ";
+    } else {
+        echo "
+            <script>
+                alert('Data admin gagal ditambahkan');
+                document.location.href = 'admin.php';
+            </script>
+            ";
+    }
+}
+
+$query = mysqli_query($koneksi, "SELECT MAX(kode_admin) as kodeTerbesar FROM admin");
+$data = mysqli_fetch_array($query);
+$kodeAdmin = $data['kodeTerbesar'];
+
+$urutan = (int) substr ($kodeAdmin, 3, 3);
+
+$urutan++;
+
+$huruf = "ADM";
+$kodeAdmin = $huruf . sprintf("%03s", $urutan);
 
 $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admin]' ");
 
@@ -32,21 +62,19 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- MetisMenu CSS -->
         <link href="../css/metisMenu.min.css" rel="stylesheet">
 
-        <!-- DataTables CSS -->
-        <link href="../css/dataTables/dataTables.bootstrap.css" rel="stylesheet">
-
-        <!-- DataTables Responsive CSS -->
-        <link href="../css/dataTables/dataTables.responsive.css" rel="stylesheet">
+        <!-- Timeline CSS -->
+        <link href="../css/timeline.css" rel="stylesheet">
 
         <!-- Custom CSS -->
         <link href="../css/startmin.css" rel="stylesheet">
 
+        <!-- Morris Charts CSS -->
+        <link href="../css/morris.css" rel="stylesheet">
+
         <!-- Custom Fonts -->
         <link href="../css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
-        <link rel="stylesheet" type="text/css" href="../css/style.css">
-
-        <link rel="shorcut icon" href="../img/perpustakaan.png">
+         <link rel="shorcut icon" href="../img/perpustakaan.png">
         
         <style type="text/css">
              .navbar-inverse {
@@ -111,14 +139,14 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                 </ul>
                 <!-- /.navbar-top-links -->
 
-                <div class="navbar-default sidebar" role="navigation">
+             <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-collapse">
                         <ul class="nav" id="side-menu">
                             <li>
                                 <a href="index.php"><i class="fa fa-home fa-fw"></i> Dashboard</a>
                             </li>
                             <li>
-                                <a href="admin.php"><i class="fa fa-user fa-fw"></i> Data Admin</a>
+                                <a href="admin.php" class="active"><i class="fa fa-user fa-fw"></i> Data Admin</a>
                             </li>
                             <li>
                                 <a href="anggota.php"><i class="fa fa-users fa-fw"></i> Data Anggota</a>
@@ -182,56 +210,44 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                     </div>
                 </div>
             </nav>
-            
+
             <div id="page-wrapper">
                 <div class="container-fluid">
+                	<form action="" method="post">
                     <div class="row">
                         <div class="col-lg-12">
-                            <h1 class="page-header"><i class="fa fa-user fa-fw"></i> Data Admin</h1>
+                            <h1 class="page-header"><i class="fa fa-user fa-fw"></i>Input Data Admin</h1>
                         </div>
                         <!-- /.col-lg-12 -->
                     </div>
                     <!-- /.row -->
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <a href="admin_input.php"><button type="button" class="btn btn-success"><i class="fa fa-plus"></i> Input Admin</button></a>
-                                    <a href="admin_laporan.php" target="_blank"><button type="button" class="btn btn-info"><i class="fa fa-print"></i> Print Admin</button></a>
-                                </div>
-                                <div class="panel-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered table-hover" id="dataTables-example">
-                                            <thead>
-                                                <tr>
-                                                    <th><div align="center">No</div></th>
-                                                    <th><div align="center">Kode Admin</div></th>
-                                                    <th><div align="center">Nama Admin</div></th>
-                                                    <th><div align="center">Username</div></th>
-                                                    <th><div align="center">Password</div></th>
-                                                </tr>
-                                            </thead>
+                     <div class="form-group">
+						<label for="kode_admin">Kode Admin</label>
+						<input class="form-control" placeholder="Kode Admin" name="kode_admin" id="kode_admin" value="<?php echo $kodeAdmin; ?>" readonly>
+					</div>
+					<div class="form-group">
+						<label for="nama_admin">Nama Admin</label>
+						<input class="form-control" placeholder="Nama Admin" name="nama_admin" id="nama_admin" autocomplete="off" autofocus="" required>
+					</div>
+					<div class="form-group">
+						<label for="username">Username</label>
+                        <input class="form-control" placeholder="Username" name="username" id="username" type="text" autocomplete="off" required>
+					</div>
+					<div class="form-group">
+                        <label for="password">Password</label>
+                        <input class="form-control" placeholder="Password" name="password" id="password" type="password" autocomplete="off" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password2">Konfirmasi Password</label>
+                        <input class="form-control" placeholder="Konfirmasi Password" name="password2" id="password2" type="password" autocomplete="off" required>
+                    </div>
+					<button type="submit" class="btn btn-success" name="input_admin">Input Admin</button>
+                    </form>
+				</div>
+        </div>
+        <!-- /#wrapper -->
 
-                                            <?php $i = 1; ?>
-                                            <?php foreach ($admin as $row) : ?>
-
-                                            <tr>
-                                                <td align="center"><?php echo $i; ?></td>
-                                                <td align="center"><?php echo $row["kode_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["nama_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["username"]; ?></td>
-                                                <td align="center">Password tidak ditampilkan</td>
-                                            </tr>
-
-                                            <?php $i++; ?>
-                                            <?php endforeach; ?>
-
-                                        </table>
-                                    </div>
-                                </div>
-                  </div>                <!-- /.table-responsive -->
-            </div>
-             <!-- jQuery -->
+        <!-- jQuery -->
         <script src="../js/jquery.min.js"></script>
 
         <!-- Bootstrap Core JavaScript -->
@@ -240,23 +256,8 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- Metis Menu Plugin JavaScript -->
         <script src="../js/metisMenu.min.js"></script>
 
-        <!-- DataTables JavaScript -->
-        <script src="../js/dataTables/jquery.dataTables.min.js"></script>
-        <script src="../js/dataTables/dataTables.bootstrap.min.js"></script>
-
         <!-- Custom Theme JavaScript -->
         <script src="../js/startmin.js"></script>
 
-        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
-        <script>
-            $(document).ready(function() {
-                $('#dataTables-example').DataTable({
-                        responsive: true
-                });
-            });
-        </script>
-
-
     </body>
-	
 </html>

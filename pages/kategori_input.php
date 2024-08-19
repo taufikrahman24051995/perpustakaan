@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 session_start();
 
@@ -9,7 +9,37 @@ if( !isset($_SESSION["login"]) ) {
 
 require 'functions.php';
 
-$admin = query("SELECT * FROM admin");
+// cek apakah tombol submit sudah ditekan atau belum
+if( isset($_POST["input_kategori"]) ) {
+
+    // cek apakah data berhasil ditambahkan atau tidak
+    if( tambahKategori($_POST) > 0) {
+        echo "
+            <script>
+                alert('Data kategori berhasil ditambahkan');
+                document.location.href = 'kategori.php';
+            </script>
+            ";
+    } else {
+        echo "
+            <script>
+                alert('Data kategori gagal ditambahkan');
+                document.location.href = 'kategori.php';
+            </script>
+            ";
+    }
+}
+
+$query = mysqli_query($koneksi, "SELECT MAX(kode_kategori) as kodeTerbesar FROM kategori");
+$data = mysqli_fetch_array($query);
+$kodeKategori = $data['kodeTerbesar'];
+
+$urutan = (int) substr ($kodeKategori, 3, 3);
+
+$urutan++;
+
+$huruf = "KTG";
+$kodeKategori = $huruf . sprintf("%03s", $urutan);
 
 $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admin]' ");
 
@@ -32,19 +62,19 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- MetisMenu CSS -->
         <link href="../css/metisMenu.min.css" rel="stylesheet">
 
-        <!-- DataTables CSS -->
-        <link href="../css/dataTables/dataTables.bootstrap.css" rel="stylesheet">
-
-        <!-- DataTables Responsive CSS -->
-        <link href="../css/dataTables/dataTables.responsive.css" rel="stylesheet">
+        <!-- Timeline CSS -->
+        <link href="../css/timeline.css" rel="stylesheet">
 
         <!-- Custom CSS -->
         <link href="../css/startmin.css" rel="stylesheet">
 
+        <!-- Morris Charts CSS -->
+        <link href="../css/morris.css" rel="stylesheet">
+
         <!-- Custom Fonts -->
         <link href="../css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
-        <link rel="stylesheet" type="text/css" href="../css/style.css">
+        <link href="../css/datepicker.css" rel="stylesheet" >
 
         <link rel="shorcut icon" href="../img/perpustakaan.png">
         
@@ -124,7 +154,7 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                                 <a href="anggota.php"><i class="fa fa-users fa-fw"></i> Data Anggota</a>
                             </li>
                             <li>
-                                <a href="kategori.php"><i class="fa fa-list-alt fa-fw"></i> Data Kategori</a>
+                                <a href="kategori.php" class="active"><i class="fa fa-list-alt fa-fw"></i> Data Kategori</a>
                             </li>
                             <li>
                                 <a href="buku.php"><i class="fa fa-book fa-fw"></i> Data Buku</a>
@@ -182,56 +212,32 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                     </div>
                 </div>
             </nav>
-            
+
             <div id="page-wrapper">
                 <div class="container-fluid">
+                	<form action="" method="post">
                     <div class="row">
                         <div class="col-lg-12">
-                            <h1 class="page-header"><i class="fa fa-user fa-fw"></i> Data Admin</h1>
+                            <h1 class="page-header"><i class="fa fa-list-alt fa-fw"></i> Input Data Kategori</h1>
                         </div>
                         <!-- /.col-lg-12 -->
                     </div>
                     <!-- /.row -->
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <a href="admin_input.php"><button type="button" class="btn btn-success"><i class="fa fa-plus"></i> Input Admin</button></a>
-                                    <a href="admin_laporan.php" target="_blank"><button type="button" class="btn btn-info"><i class="fa fa-print"></i> Print Admin</button></a>
-                                </div>
-                                <div class="panel-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered table-hover" id="dataTables-example">
-                                            <thead>
-                                                <tr>
-                                                    <th><div align="center">No</div></th>
-                                                    <th><div align="center">Kode Admin</div></th>
-                                                    <th><div align="center">Nama Admin</div></th>
-                                                    <th><div align="center">Username</div></th>
-                                                    <th><div align="center">Password</div></th>
-                                                </tr>
-                                            </thead>
+                     <div class="form-group">
+						<label for="kode_kategori">Kode Kategori</label>
+						<input class="form-control" placeholder="Kode Kategori" name="kode_kategori" id="kode_kategori" value="<?php echo $kodeKategori; ?>" readonly>
+					</div>
+					<div class="form-group">
+						<label for="nama_kategori">Nama</label>
+						<input class="form-control" placeholder="Nama Kategori" name="nama_kategori" id="nama_kategori" autofocus autocomplete="off" required>
+					</div>
+					<button type="submit" class="btn btn-success" name="input_kategori">Input Kategori</button>
+                    </form>
+				</div>
+        </div>
+        <!-- /#wrapper -->
 
-                                            <?php $i = 1; ?>
-                                            <?php foreach ($admin as $row) : ?>
-
-                                            <tr>
-                                                <td align="center"><?php echo $i; ?></td>
-                                                <td align="center"><?php echo $row["kode_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["nama_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["username"]; ?></td>
-                                                <td align="center">Password tidak ditampilkan</td>
-                                            </tr>
-
-                                            <?php $i++; ?>
-                                            <?php endforeach; ?>
-
-                                        </table>
-                                    </div>
-                                </div>
-                  </div>                <!-- /.table-responsive -->
-            </div>
-             <!-- jQuery -->
+        <!-- jQuery -->
         <script src="../js/jquery.min.js"></script>
 
         <!-- Bootstrap Core JavaScript -->
@@ -240,23 +246,20 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- Metis Menu Plugin JavaScript -->
         <script src="../js/metisMenu.min.js"></script>
 
-        <!-- DataTables JavaScript -->
-        <script src="../js/dataTables/jquery.dataTables.min.js"></script>
-        <script src="../js/dataTables/dataTables.bootstrap.min.js"></script>
-
         <!-- Custom Theme JavaScript -->
         <script src="../js/startmin.js"></script>
 
-        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
-        <script>
-            $(document).ready(function() {
-                $('#dataTables-example').DataTable({
-                        responsive: true
+        <script src="../js/bootstrap-datepicker.js"></script>
+
+        <script type="text/javascript">
+            $(function(){
+                $(".datepicker").datepicker({
+                    format: 'dd-mm-yyyy',
+                    autoclose: true,
+                    todayHighlight: false,
                 });
             });
         </script>
 
-
     </body>
-	
 </html>

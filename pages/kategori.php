@@ -9,7 +9,7 @@ if( !isset($_SESSION["login"]) ) {
 
 require 'functions.php';
 
-$admin = query("SELECT * FROM admin");
+$kategori = query("SELECT * FROM kategori");
 
 $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admin]' ");
 
@@ -111,7 +111,7 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                 </ul>
                 <!-- /.navbar-top-links -->
 
-                <div class="navbar-default sidebar" role="navigation">
+             <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-collapse">
                         <ul class="nav" id="side-menu">
                             <li>
@@ -187,7 +187,7 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-lg-12">
-                            <h1 class="page-header"><i class="fa fa-user fa-fw"></i> Data Admin</h1>
+                            <h1 class="page-header"><i class="fa fa-list-alt fa-fw"></i> Data Kategori</h1>
                         </div>
                         <!-- /.col-lg-12 -->
                     </div>
@@ -196,31 +196,42 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                         <div class="col-lg-12">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    <a href="admin_input.php"><button type="button" class="btn btn-success"><i class="fa fa-plus"></i> Input Admin</button></a>
-                                    <a href="admin_laporan.php" target="_blank"><button type="button" class="btn btn-info"><i class="fa fa-print"></i> Print Admin</button></a>
+                                    <a href="kategori_input.php"><button type="button" class="btn btn-success"><i class="fa fa-plus"></i> Input Kategori</button></a>
+                                     <a href="kategori_laporan.php" target="_blank"><button type="button" class="btn btn-info"><i class="fa fa-print"></i> Print Lategori</button></a>
                                 </div>
+                                <!-- /.panel-heading -->
                                 <div class="panel-body">
                                     <div class="table-responsive">
                                         <table class="table table-striped table-bordered table-hover" id="dataTables-example">
                                             <thead>
                                                 <tr>
                                                     <th><div align="center">No</div></th>
-                                                    <th><div align="center">Kode Admin</div></th>
-                                                    <th><div align="center">Nama Admin</div></th>
-                                                    <th><div align="center">Username</div></th>
-                                                    <th><div align="center">Password</div></th>
+                                                    <th><div align="center">Kode Kategori</div></th>
+                                                    <th><div align="center">Nama Kategori</div></th>
+                                                    <th><div align="center">Aksi</div></th>
                                                 </tr>
                                             </thead>
 
                                             <?php $i = 1; ?>
-                                            <?php foreach ($admin as $row) : ?>
+                                            <?php foreach ($kategori as $row) : ?>
 
                                             <tr>
                                                 <td align="center"><?php echo $i; ?></td>
-                                                <td align="center"><?php echo $row["kode_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["nama_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["username"]; ?></td>
-                                                <td align="center">Password tidak ditampilkan</td>
+                                                <td align="center"><?php echo $row["kode_kategori"]; ?></td>
+                                                <td align="center"><?php echo $row["nama_kategori"]; ?></td>
+                                                <td align="center">
+                                                        <a style="text-decoration: none; color: white;" href="kategori_ubah.php?kode_kategori=<?php echo $row["kode_kategori"]; ?>">
+                                                        <button class="btn btn-danger">
+                                                        <i class="fa fa-edit"></i> Ubah
+                                                        </button>
+                                                        </a>
+                                                        
+                                                        <a style="text-decoration: none; color: white;" href="kategori_hapus.php?kode_kategori=<?php echo $row["kode_kategori"]; ?>" onclick="return confirm('Hapus data kategori');" >
+                                                        <button class="btn btn-warning">
+                                                        <i class="fa fa-trash"></i> Hapus 
+                                                    </button>
+                                                        </a>
+                                                </td>
                                             </tr>
 
                                             <?php $i++; ?>

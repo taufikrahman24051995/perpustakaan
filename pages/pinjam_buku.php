@@ -1,5 +1,4 @@
-<?php 
-
+<?php
 session_start();
 
 if( !isset($_SESSION["login"]) ) {
@@ -9,9 +8,58 @@ if( !isset($_SESSION["login"]) ) {
 
 require 'functions.php';
 
-$admin = query("SELECT * FROM admin");
+// cek apakah tombol submit sudah ditekan atau belum
+if( isset($_POST["pinjam_buku"]) ) {
+
+    // cek apakah data berhasil ditambahkan atau tidak
+    if( pinjamBuku($_POST) > 0) {
+        echo "
+            <script>
+                alert('Buku berhasil dipinjam');
+                document.location.href = 'pinjam_data.php';
+            </script>
+            ";
+    } else {
+        echo "
+            <script>
+                alert('Buku gagal dipinjam');
+                document.location.href = 'pinjam_data.php';
+            </script>
+            ";
+    }
+}
+
+$sql = mysqli_query($koneksi, "SELECT * FROM pinjam");
+$ketemu = mysqli_num_rows($sql);
+if ($ketemu === 0){
+    $query = mysqli_query($koneksi, "SELECT MAX(kode_pinjam) as kodeTerbesar FROM peminjaman");
+    $data = mysqli_fetch_array($query);
+    $kodePinjam = $data['kodeTerbesar'];
+
+    $urutan = (int) substr ($kodePinjam, 3, 3);
+
+    $urutan++;
+
+    $huruf = "PJM";
+    $kodePinjam = $huruf . sprintf("%03s", $urutan);
+} else {
+    $query = mysqli_query($koneksi, "SELECT MAX(kode_pinjam) as kodeTerbesar FROM pinjam");
+    $data = mysqli_fetch_array($query);
+    $kodePinjam = $data['kodeTerbesar'];
+
+    $urutan = (int) substr ($kodePinjam, 3, 3);
+
+    $urutan++;
+
+    $huruf = "PJM";
+    $kodePinjam = $huruf . sprintf("%03s", $urutan);
+}
 
 $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admin]' ");
+
+$tanggal_pinjam    = date("d-m-Y");
+$masa_pinjam      = mktime(0,0,0,date("n"),date("j")+7,date("Y"));
+$tanggal_kembali   = date("d-m-Y", $masa_pinjam); 
 
 ?>
 
@@ -32,22 +80,22 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- MetisMenu CSS -->
         <link href="../css/metisMenu.min.css" rel="stylesheet">
 
-        <!-- DataTables CSS -->
-        <link href="../css/dataTables/dataTables.bootstrap.css" rel="stylesheet">
-
-        <!-- DataTables Responsive CSS -->
-        <link href="../css/dataTables/dataTables.responsive.css" rel="stylesheet">
+        <!-- Timeline CSS -->
+        <link href="../css/timeline.css" rel="stylesheet">
 
         <!-- Custom CSS -->
         <link href="../css/startmin.css" rel="stylesheet">
 
+        <!-- Morris Charts CSS -->
+        <link href="../css/morris.css" rel="stylesheet">
+
+        <link href="../css/datepicker.css" rel="stylesheet" >
+
         <!-- Custom Fonts -->
         <link href="../css/font-awesome.min.css" rel="stylesheet" type="text/css">
 
-        <link rel="stylesheet" type="text/css" href="../css/style.css">
-
         <link rel="shorcut icon" href="../img/perpustakaan.png">
-        
+
         <style type="text/css">
              .navbar-inverse {
                     background-color: #5cb85c;
@@ -111,7 +159,7 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                 </ul>
                 <!-- /.navbar-top-links -->
 
-                <div class="navbar-default sidebar" role="navigation">
+               <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-collapse">
                         <ul class="nav" id="side-menu">
                             <li>
@@ -182,56 +230,69 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
                     </div>
                 </div>
             </nav>
-            
+
             <div id="page-wrapper">
                 <div class="container-fluid">
+                	<form action="" method="post">
                     <div class="row">
                         <div class="col-lg-12">
-                            <h1 class="page-header"><i class="fa fa-user fa-fw"></i> Data Admin</h1>
+                            <h1 class="page-header"><i class="fa fa-list fa-fw"></i> Pinjam Buku</h1>
                         </div>
                         <!-- /.col-lg-12 -->
                     </div>
                     <!-- /.row -->
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="panel panel-default">
-                                <div class="panel-heading">
-                                    <a href="admin_input.php"><button type="button" class="btn btn-success"><i class="fa fa-plus"></i> Input Admin</button></a>
-                                    <a href="admin_laporan.php" target="_blank"><button type="button" class="btn btn-info"><i class="fa fa-print"></i> Print Admin</button></a>
-                                </div>
-                                <div class="panel-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered table-hover" id="dataTables-example">
-                                            <thead>
-                                                <tr>
-                                                    <th><div align="center">No</div></th>
-                                                    <th><div align="center">Kode Admin</div></th>
-                                                    <th><div align="center">Nama Admin</div></th>
-                                                    <th><div align="center">Username</div></th>
-                                                    <th><div align="center">Password</div></th>
-                                                </tr>
-                                            </thead>
+                     <div class="form-group">
+						<label for="kode_buku">Kode Pinjam</label>
+						<input class="form-control" placeholder="Kode Pinjam" name="kode_pinjam" id="kode_pinjam" value="<?php echo $kodePinjam; ?>" readonly>
+					</div>
 
-                                            <?php $i = 1; ?>
-                                            <?php foreach ($admin as $row) : ?>
+					<div class="form-group">
+                        <label>Nama Anggota</label>
+                        <select name="nama_anggota" id="nama_anggota" class="form-control" required>
+                            <option value="" >Pilih Nama Anggota</option>
+                            <?php 
+                                $anggota = mysqli_query($koneksi, "SELECT * FROM anggota");
+                                $jsArray = "var prdName = new Array();\n";
+                                while($nama_anggota = mysqli_fetch_array($anggota) ) {
+                                echo'<option value = "' .$nama_anggota['kode_anggota'].'">'. $nama_anggota['kode_anggota'].'   '. $nama_anggota['nama_anggota'].' </option>';
+                                }
+                             ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Kategori</label>
+                        <select name="nama_kategori" id="nama_kategori" class="form-control" required>
+                            <option value="" >Pilih Kategori</option>
+                            <?php 
+                                $kategori = mysqli_query($koneksi, "SELECT * FROM kategori");
+                                $jsArray = "var prdName = new Array();\n";
+                                while($nama_kategori = mysqli_fetch_array($kategori) ) {
+                                echo'<option value = "' .$nama_kategori['kode_kategori'].'">'. $nama_kategori['kode_kategori'].'   '. $nama_kategori['nama_kategori'].' </option>';
+                                }
+                             ?>
+                        </select>
+                    </div>
+					<div class="form-group">
+                        <label>Judul Buku</label>
+                        <select name="judul_buku" id="judul_buku" class="form-control" required>
+                            <option value="" >Pilih Judul Buku</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tanggal_pinjam">Tanggal Pinjam</label>
+                        <input class="form-control" placeholder="Tanggal Pinjam" name="tanggal_pinjam" id="tanggal_pinjam" autocomplete="off" value="<?php echo $tanggal_pinjam ?>" readonly>
+                    </div>
+					<div class="form-group">
+                        <label for="tanggal_kembali">Tanggal Kembali</label>
+                        <input class="form-control" placeholder="Tanggal Kembali" name="tanggal_kembali" id="tanggal_kembali" autocomplete="off" value="<?php echo $tanggal_kembali ?>" readonly>
+                    </div>
+					<button type="submit" class="btn btn-success" name="pinjam_buku">Pinjam Buku</button>
+                    </form>
+				</div>
+        </div>
+        <!-- /#wrapper -->
 
-                                            <tr>
-                                                <td align="center"><?php echo $i; ?></td>
-                                                <td align="center"><?php echo $row["kode_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["nama_admin"]; ?></td>
-                                                <td align="center"><?php echo $row["username"]; ?></td>
-                                                <td align="center">Password tidak ditampilkan</td>
-                                            </tr>
-
-                                            <?php $i++; ?>
-                                            <?php endforeach; ?>
-
-                                        </table>
-                                    </div>
-                                </div>
-                  </div>                <!-- /.table-responsive -->
-            </div>
-             <!-- jQuery -->
+        <!-- jQuery -->
         <script src="../js/jquery.min.js"></script>
 
         <!-- Bootstrap Core JavaScript -->
@@ -240,23 +301,41 @@ $nama_admin = query("SELECT * FROM admin WHERE kode_admin = '$_SESSION[kode_admi
         <!-- Metis Menu Plugin JavaScript -->
         <script src="../js/metisMenu.min.js"></script>
 
-        <!-- DataTables JavaScript -->
-        <script src="../js/dataTables/jquery.dataTables.min.js"></script>
-        <script src="../js/dataTables/dataTables.bootstrap.min.js"></script>
-
         <!-- Custom Theme JavaScript -->
         <script src="../js/startmin.js"></script>
 
-        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
+        <script src="../js/bootstrap-datepicker.js"></script>
+
         <script>
-            $(document).ready(function() {
-                $('#dataTables-example').DataTable({
-                        responsive: true
-                });
+   
+            $("#nama_kategori").change(function(){
+           
+                // variabel dari nilai combo box provinsi
+                var kode_kategori = $("#nama_kategori").val();
+               
+                // mengirim dan mengambil data
+                $.ajax({
+                    type: "POST",
+                    dataType: "html",
+                    url: "pinjam_aksi_input.php",
+                    data: "kategori="+kode_kategori,
+                    success: function(msg){
+                       
+                        // jika tidak ada data
+                        if(msg == 0){
+                            alert('Data Buku Lagi Kosong');
+                            location.reload();
+                        }
+                       
+                        // jika dapat mengambil data,, tampilkan di combo box kota
+                        else{
+                            $("#judul_buku").html(msg);                                                     
+                        }
+                       
+                    }
+                });    
             });
         </script>
 
-
     </body>
-	
 </html>
